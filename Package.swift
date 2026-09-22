@@ -1,15 +1,21 @@
 // swift-tools-version: 5.9
 import PackageDescription
-let macLibgodotTarget: Target = .binaryTarget(
-    name: "mac_libgodot",
-    url: "https://github.com/iarafathsn/godot/releases/download/v4.7.1/libgodot-macos.xcframework.zip",
-    checksum: "bdb979a18bb49342550177a087dabbd9826ddbf47f04af062a66d23a36501fb8"
-)
 
+// The libgodot binary is built locally from the adjacent `godot` checkout
+// (branch `audreborn-4.7`) rather than downloaded from a release:
+//
+//   scripts/build-ios-audreborn.sh                       # 3 iOS slices, ~5 min
+//   scripts/make-libgodot.xcframework . ../godot artifacts
+//
+// That keeps engine changes to a single local rebuild, with no release upload
+// and no download on the way back. `artifacts/` is deliberately not in git --
+// the xcframework is ~500 MB.
+//
+// The macOS binary target upstream declares is dropped: the host app is
+// iPhone-only, and building the two macOS slices doubles the build time.
 let iosLibgodotTarget: Target = .binaryTarget(
     name: "ios_libgodot",
-    url: "https://github.com/iarafathsn/godot/releases/download/v4.7.1/libgodot-ios.xcframework.zip",
-    checksum: "9018de5143c3d71648ee08a7189a3762c4780cf9ab8d4e8f9221ffa39e4e70d0"
+    path: "artifacts/ios/libgodot.xcframework"
 )
 
 let package = Package(
@@ -23,7 +29,6 @@ let package = Package(
         .library(
             name: "SwiftGodotKit",
             targets: ["SwiftGodotKit"]),
-        .executable(name: "TrivialSample", targets: ["TrivialSample"]),
     ],
     dependencies: [
     		  // This is tag 0.75.0
@@ -38,23 +43,7 @@ let package = Package(
                 "SwiftGodot",
                 "libgodot",
                 .target(name: "apple_plugin_stubs", condition: .when(platforms: [.iOS])),
-                .target(name: "mac_libgodot", condition: .when(platforms: [.macOS])),
                 .target(name: "ios_libgodot", condition: .when(platforms: [.iOS])),
-            ]
-        ),
-
-        .executableTarget(
-            name: "TrivialSample",
-            dependencies: ["SwiftGodotKit"],
-            
-            // This line does not seem to do anything in Xcode, so you need to manually
-            // copy main.pck and make it available from somwehere else
-            resources: [
-                .copy("main.pck"),
-                .copy("main.tscn"),
-                .copy("project.godot"),
-                .copy(".godot"),
-                .copy("godot"),
             ]
         ),
 
@@ -64,7 +53,6 @@ let package = Package(
             publicHeadersPath: "include"
         ),
 
-        macLibgodotTarget,
         iosLibgodotTarget,
         .systemLibrary(
             name: "libgodot"

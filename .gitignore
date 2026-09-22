@@ -10,3 +10,6 @@ DerivedData/
 *.xcframework
 *.a
 *.dylib
+
+# Locally built libgodot (~500 MB), rebuilt by scripts/build-ios-audreborn.sh
+artifacts/
