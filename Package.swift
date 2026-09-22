@@ -1,22 +1,41 @@
 // swift-tools-version: 5.9
 import PackageDescription
+import Foundation
 
-// The libgodot binary is built locally from the adjacent `godot` checkout
-// (branch `audreborn-4.7`) rather than downloaded from a release:
+// libgodot comes from our own fork of the engine (ZouAgTao/godot, branch
+// `audreborn-4.7`). There are two ways to get it:
 //
-//   scripts/build-ios-audreborn.sh                       # 3 iOS slices, ~5 min
-//   scripts/make-libgodot.xcframework . ../godot artifacts
+//   default           the published release named below. A fresh checkout builds
+//                     with no engine toolchain and no godot checkout -- SwiftPM
+//                     downloads and caches the xcframework.
+//   LIBGODOT_LOCAL=1  artifacts/ios/libgodot.xcframework, built by
+//                     scripts/build-ios-audreborn.sh. This is the mode for working
+//                     ON the engine: about 30 seconds per round trip, and nothing
+//                     goes over the network.
 //
-// That keeps engine changes to a single local rebuild, with no release upload
-// and no download on the way back. `artifacts/` is deliberately not in git --
-// the xcframework is ~500 MB.
+// After changing the engine, publish with scripts/publish-audreborn-release.sh --
+// it prints the two lines to update right here.
 //
-// The macOS binary target upstream declares is dropped: the host app is
-// iPhone-only, and building the two macOS slices doubles the build time.
-let iosLibgodotTarget: Target = .binaryTarget(
-    name: "ios_libgodot",
-    path: "artifacts/ios/libgodot.xcframework"
+// The macOS binary target upstream declares is dropped, along with the sample
+// executable: this package is consumed by an iPhone-only host, and building the
+// two macOS slices doubles the build time.
+let libgodotRelease = (
+    version: "v4.7.1-audreborn.1",
+    checksum: "fcff4e9367c8f747e7540926bc625293e7d298955a12daa0a603cca251182720"
 )
+
+let iosLibgodotTarget: Target =
+    ProcessInfo.processInfo.environment["LIBGODOT_LOCAL"] != nil
+    ? .binaryTarget(
+        name: "ios_libgodot",
+        path: "artifacts/ios/libgodot.xcframework"
+      )
+    : .binaryTarget(
+        name: "ios_libgodot",
+        url: "https://github.com/ZouAgTao/godot/releases/download/"
+             + "\(libgodotRelease.version)/libgodot-ios.xcframework.zip",
+        checksum: libgodotRelease.checksum
+      )
 
 let package = Package(
     name: "SwiftGodotKit",
