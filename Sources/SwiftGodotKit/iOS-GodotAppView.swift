@@ -159,7 +159,15 @@ public class UIGodotAppView: UIView {
             }
             if displayLink == nil {
                 let displayLink = CADisplayLink(target: self, selector: #selector(iterate))
-                displayLink.add(to: .current, forMode: RunLoop.Mode.default)
+                // .common rather than .default: UIKit does not service the default
+                // mode while it runs a scroll or a sheet drag, so the engine stops
+                // stepping for the whole gesture -- 3D behind a scrolling overlay
+                // freezes, and anything driven by the frame loop (tweens, timers)
+                // stalls with it. The macOS view in this same package already
+                // installs its link on .main/.common; this is the path that missed
+                // out. .main rather than .current for the same reason it is correct
+                // there: it does not depend on which run loop the caller is on.
+                displayLink.add(to: .main, forMode: RunLoop.Mode.common)
                 self.displayLink = displayLink
             }
             if embedded == nil {
