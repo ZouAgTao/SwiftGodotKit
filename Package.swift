@@ -20,8 +20,8 @@ import Foundation
 // executable: this package is consumed by an iPhone-only host, and building the
 // two macOS slices doubles the build time.
 let libgodotRelease = (
-    version: "v4.7.1-audreborn.1",
-    checksum: "fcff4e9367c8f747e7540926bc625293e7d298955a12daa0a603cca251182720"
+    version: "v4.7.1-audreborn.2",
+    checksum: "34d2b73b3974e652ecbae156ae944293e04df7248208ee32aa8941c0c54953c7"
 )
 
 let iosLibgodotTarget: Target =
