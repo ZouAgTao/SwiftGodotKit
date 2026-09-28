@@ -64,6 +64,7 @@ typealias TTGodotWindow = UIGodotWindow
 public class UIGodotAppView: UIView {
     public var renderingLayer: CAMetalLayer? = nil
     private var displayLink : CADisplayLink? = nil
+    private var appliedFrameRate: Int?
     
     private var embedded: DisplayServerEmbedded?
     private var callbackToken: UUID?
@@ -169,6 +170,7 @@ public class UIGodotAppView: UIView {
                 // there: it does not depend on which run loop the caller is on.
                 displayLink.add(to: .main, forMode: RunLoop.Mode.common)
                 self.displayLink = displayLink
+                applyFrameRate()
             }
             if embedded == nil {
                 if let displayServer = DisplayServer.shared as? DisplayServerEmbedded {
@@ -349,8 +351,16 @@ public class UIGodotAppView: UIView {
         startGodotInstance()
     }
 
+    private func applyFrameRate() {
+        guard let app, let displayLink, appliedFrameRate != app.preferredFrameRate else { return }
+        let fps = Float(app.preferredFrameRate)
+        displayLink.preferredFrameRateRange = CAFrameRateRange(minimum: fps, maximum: fps, preferred: fps)
+        appliedFrameRate = app.preferredFrameRate
+    }
+
     @objc
     func iterate() {
+        applyFrameRate()
         if let app, (app.isPaused || !app.isDrawing) {
             return
         }

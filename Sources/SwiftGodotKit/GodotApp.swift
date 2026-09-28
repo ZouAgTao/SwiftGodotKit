@@ -44,6 +44,13 @@ public final class GodotAppViewHandle {
         app?.emitMessage(message, from: viewId)
     }
 
+    #if os(iOS)
+    /// Requests a display-link cadence without replacing the embedded view.
+    public func setPreferredFrameRate(_ framesPerSecond: Int) {
+        app?.setPreferredFrameRate(framesPerSecond)
+    }
+    #endif
+
     public func startDrawing() {
         app?.startDrawing()
     }
@@ -279,6 +286,18 @@ public class GodotApp: ObservableObject {
             isPaused = false
         }
     }
+
+    #if os(iOS)
+    internal private(set) var preferredFrameRate = 60
+
+    /// The system may choose a lower cadence due to hardware or power policies.
+    /// Apply on the UI thread, where the display link consumes the value.
+    public func setPreferredFrameRate(_ framesPerSecond: Int) {
+        let fps = max(1, min(framesPerSecond, 60))
+        if Thread.isMainThread { preferredFrameRate = fps }
+        else { DispatchQueue.main.async { [weak self] in self?.preferredFrameRate = fps } }
+    }
+    #endif
 
     public func startDrawing() {
         isDrawing = true
