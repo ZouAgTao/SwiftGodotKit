@@ -170,6 +170,9 @@ public class UIGodotAppView: UIView {
                 // there: it does not depend on which run loop the caller is on.
                 displayLink.add(to: .main, forMode: RunLoop.Mode.common)
                 self.displayLink = displayLink
+                // A replacement link has its own defaults, even when the app's
+                // requested rate is unchanged since the previous link.
+                appliedFrameRate = nil
                 applyFrameRate()
             }
             if embedded == nil {
